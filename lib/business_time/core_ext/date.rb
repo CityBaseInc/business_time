@@ -1,7 +1,12 @@
 # Add workday and weekday concepts to the Date class
 class Date
+  include BusinessTime::Sequences
+
+  # TODO: extract to method holiday condition #holiday?
   def workday?
-    weekday? && !BusinessTime::Config.holidays.include?(self)
+    weekday? &&
+      !holiday?(BusinessTime::Config.region) &&
+      !BusinessTime::Config.holidays.include?(self)
   end
 
   def weekday?

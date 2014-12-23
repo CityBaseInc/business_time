@@ -1,5 +1,7 @@
 module BusinessTime
   module TimeExtensions
+    include BusinessTime::Sequences
+
     def self.included(base)
       base.extend(ClassMethods)
     end
@@ -27,7 +29,8 @@ module BusinessTime
       # this time falls outside of normal business hours.
       def workday?(day)
         Time.weekday?(day) &&
-          !BusinessTime::Config.holidays.include?(day.to_date)
+          !BusinessTime::Config.holidays.include?(day.to_date) &&
+          !day.to_date.holiday?(BusinessTime::Config.region)
       end
 
       # True if this time falls on a weekday.
@@ -141,7 +144,7 @@ module BusinessTime
         first_day + days_in_between + last_day
       end * direction
     end
-    
+
     def during_business_hours?
       Time.workday?(self) && self.to_i.between?(Time.beginning_of_workday(self).to_i, Time.end_of_workday(self).to_i)
     end

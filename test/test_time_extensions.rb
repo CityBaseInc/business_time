@@ -24,6 +24,10 @@ describe "time extensions" do
     assert(!Time.workday?(Time.parse("July 5th, 2010 2:37 pm")))
   end
 
+  it "know a holiday is not a workday for region" do
+    holiday = Time.parse("July 1, 2008 14:00")  # Holiday in Canada
+    assert !Time.workday?(holiday)
+  end
 
   it "know the beginning of the day for an instance" do
     first = Time.parse("August 17th, 2010, 11:50 am")
@@ -76,8 +80,8 @@ describe "time extensions" do
   end
 
   it "calculate proper timing if there are several days between" do
-    time_a = Time.parse('2012-02-01 10:00')
-    time_b = Time.parse('2012-02-09 11:00')
+    time_a = Time.parse('2012-03-01 10:00')
+    time_b = Time.parse('2012-03-09 11:00')
     duration_of_working_day = Time.parse(BusinessTime::Config.end_of_workday) - Time.parse(BusinessTime::Config.beginning_of_workday)
     assert_equal time_a.business_time_until(time_b), 6 * duration_of_working_day + 1.hour
     assert_equal time_b.business_time_until(time_a), -(6 * duration_of_working_day + 1.hour)
@@ -130,5 +134,20 @@ describe "time extensions" do
       :sat=>["13:00","14:00"]
     }
     assert_equal wednesday, Time.roll_backward(saturday)
+  end
+
+  # =================== sequences ======================
+
+  it "starts next day at the morning" do
+    monday = Time.parse("July 7, 2008 14:00")
+    tuesday_morning = Time.parse("July 8, 2008 9:00")
+    assert_equal tuesday_morning, monday.next_business_day
+  end
+
+  it "starts previous day at the morning" do
+    tuesday = Time.parse("July 3, 2008 14:00")
+    wednesday_morning = Time.parse("July 2, 2008 9:00")
+    assert Time.workday?(wednesday_morning)
+    assert_equal wednesday_morning, tuesday.previous_business_day
   end
 end

@@ -13,6 +13,7 @@ module BusinessTime
       work_week:             %w(mon tue wed thu fri),
       work_hours:            {},
       work_hours_total:      {},
+      region:                :any,
       _weekdays:             nil,
     }
 
@@ -69,6 +70,9 @@ module BusinessTime
 
     # total work hours for a day. Never set, always calculated.
     threadsafe_cattr_accessor :work_hours_total
+
+    # Region for holidays
+    threadsafe_cattr_accessor :region
 
     threadsafe_cattr_accessor :_weekdays # internal
 
