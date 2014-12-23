@@ -42,6 +42,10 @@ describe "date extensions" do
   it "starts next day at the morning" do
     thursday = Date.parse("July 3, 2008")
     friday_morning = Time.parse("July 4, 2008 9:00")
+
+    p '----'
+    p thursday.next_business_day
+
     assert_equal friday_morning, thursday.next_business_day
   end
 

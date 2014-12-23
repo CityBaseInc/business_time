@@ -92,7 +92,7 @@ describe "time extensions" do
     ticket_resolved = Time.parse("February 4, 2012, 10:40 am") #will roll over to Monday morning, 9:00am
     assert_equal ticket_reported.business_time_until(ticket_resolved), 6.hours + 20.minutes
   end
-  
+
   it "knows if within business hours" do
     assert(Time.parse("2013-02-01 10:00").during_business_hours?)
     assert(!Time.parse("2013-02-01 5:00").during_business_hours?)
@@ -142,6 +142,12 @@ describe "time extensions" do
     monday = Time.parse("July 7, 2008 14:00")
     tuesday_morning = Time.parse("July 8, 2008 9:00")
     assert_equal tuesday_morning, monday.next_business_day
+  end
+
+  it "save timezone" do
+    day = Time.parse("Tue, 23 Dec 2014 13:55:10 -09:00").in_time_zone('Alaska')
+    next_day = Time.parse("Tue, 24 Dec 2014 09:00:00 -09:00").in_time_zone('Alaska')
+    assert_equal next_day, day.next_business_day
   end
 
   it "starts previous day at the morning" do
