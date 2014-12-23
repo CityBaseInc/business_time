@@ -30,7 +30,7 @@ module BusinessTime
       def workday?(day)
         Time.weekday?(day) &&
           !BusinessTime::Config.holidays.include?(day.to_date) &&
-          !day.to_date.holiday?(BusinessTime::Config.region)
+          !day.to_date.holiday?(BusinessTime::Config.region, :observed)
       end
 
       # True if this time falls on a weekday.

@@ -2,11 +2,10 @@
 class Date
   include BusinessTime::Sequences
 
-  # TODO: extract to method holiday condition #holiday?
   def workday?
     weekday? &&
-      !holiday?(BusinessTime::Config.region) &&
-      !BusinessTime::Config.holidays.include?(self)
+      !BusinessTime::Config.holidays.include?(self) &&
+      !holiday?(BusinessTime::Config.region, :observed)
   end
 
   def weekday?

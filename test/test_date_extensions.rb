@@ -31,22 +31,23 @@ describe "date extensions" do
   end
 
   it "know a holiday is not a workday for region" do
-    BusinessTime::Config.region = :ca
-    holiday = Date.parse("July 1, 2008")  # Holiday in Canada
-    assert !holiday.workday?
+    BusinessTime.region :us do
+      holiday = Date.parse("July 3, 2015")  # Holiday in US
+      assert !holiday.workday?
+    end
   end
 
   # =================== sequences ======================
 
   it "starts next day at the morning" do
-    tuesday = Date.parse("July 3, 2008")
+    thursday = Date.parse("July 3, 2008")
     friday_morning = Time.parse("July 4, 2008 9:00")
-    assert_equal friday_morning, tuesday.next_business_day
+    assert_equal friday_morning, thursday.next_business_day
   end
 
   it "starts previous day at the morning" do
-    tuesday = Date.parse("July 3, 2008")
+    thursday = Date.parse("July 3, 2008")
     wednesday_morning = Time.parse("July2, 2008 9:00")
-    assert_equal wednesday_morning, tuesday.previous_business_day
+    assert_equal wednesday_morning, thursday.previous_business_day
   end
 end
