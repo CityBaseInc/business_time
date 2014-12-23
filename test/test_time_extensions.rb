@@ -25,8 +25,10 @@ describe "time extensions" do
   end
 
   it "know a holiday is not a workday for region" do
-    holiday = Time.parse("July 1, 2008 14:00")  # Holiday in Canada
-    assert !Time.workday?(holiday)
+    BusinessTime.region :ca do
+      holiday = Time.parse("July 1, 2008 14:00")  # Holiday in Canada
+      assert !Time.workday?(holiday)
+    end
   end
 
   it "know the beginning of the day for an instance" do

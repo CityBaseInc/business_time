@@ -107,7 +107,8 @@ module BusinessTime
       private
 
       def change_business_time time, hour, min=0, sec=0
-        time.to_time.change(:hour => hour, :min => min, :sec => sec)
+        time = time.to_time if time.kind_of?(Date)
+        time.change(:hour => hour, :min => min, :sec => sec)
       end
     end
 
