@@ -20,13 +20,13 @@ module BusinessTime
   class << self
 
     def region(name, &block)
-      old_region = BusinessTime::Config.region
-      BusinessTime::Config.region = name
-      yield
-    ensure
-      BusinessTime::Config.region = old_region
+      config = BusinessTime::Config.companies[name.to_s] || {}
+      config.merge!("region" => name)
+      BusinessTime::Config.with(config) do
+        yield
+      end
     end
-    alias_method :brand, :region
+    alias_method :company, :region
 
   end
 end

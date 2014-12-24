@@ -158,4 +158,22 @@ describe "time extensions" do
     assert Time.workday?(wednesday_morning)
     assert_equal wednesday_morning, tuesday.previous_business_day
   end
+
+  # =================== working time ======================
+
+  it "provide different working time for different brands" do
+    yaml = <<-YAML
+      business_time:
+        my_company:
+          beginning_of_workday: 7:00 am
+          end_of_workday: 2:00 pm
+    YAML
+    config_file = StringIO.new(yaml.gsub!(/^    /, ''))
+    BusinessTime::Config.load_companies(config_file)
+
+    BusinessTime.company :my_company do
+      assert_equal "7:00 am", BusinessTime::Config.beginning_of_workday
+      assert_equal "2:00 pm", BusinessTime::Config.end_of_workday
+    end
+  end
 end

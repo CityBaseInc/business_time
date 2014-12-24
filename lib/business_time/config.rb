@@ -13,7 +13,8 @@ module BusinessTime
       work_week:             %w(mon tue wed thu fri),
       work_hours:            {},
       work_hours_total:      {},
-      region:                :any,
+      company:               :any,
+      companies:             {},
       _weekdays:             nil,
     }
 
@@ -71,8 +72,16 @@ module BusinessTime
     # total work hours for a day. Never set, always calculated.
     threadsafe_cattr_accessor :work_hours_total
 
-    # Region for holidays
-    threadsafe_cattr_accessor :region
+    # company for holidays
+    threadsafe_cattr_accessor :company
+
+    # Store settings for custom companies. See #load_companies for details
+    threadsafe_cattr_accessor :companies
+
+    class << self
+      alias_method :region, :company
+      alias_method :region=, :company=
+    end
 
     threadsafe_cattr_accessor :_weekdays # internal
 
@@ -131,6 +140,33 @@ module BusinessTime
 
         (config["holidays"] || []).each do |holiday|
           holidays << Date.parse(holiday)
+        end
+      end
+
+      # Load yml and store in companies var
+      #
+      #   business_time:
+      #     my_company:
+      #       beginning_od_workday: 8:30 am
+      #       end_of_workday: 5:30 pm
+      #       holidays:
+      #         - Jan 1st, 2010
+      #         - July 4th, 2010
+      #         - Dec 25th, 2010
+      def load_companies(file)
+        self.companies = {}
+        data = YAML::load(file.respond_to?(:read) ? file : File.open(file))
+
+        config = (data["business_time"] || {})
+        config.each do |company, values|
+          self.companies[company] = default_config
+          self.companies[company] = values.slice(*%w(beginning_of_workday end_of_workday work_week work_hours))
+
+          # Parse holiday before load
+          self.companies[company]["holidays"] ||= []
+          (values["holidays"] || []).each do |holiday|
+            self.companies[company]["holidays"] << Date.parse(holiday)
+          end
         end
       end
 
