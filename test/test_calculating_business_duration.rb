@@ -31,7 +31,7 @@ describe "calculating business duration" do
     assert_equal 32461.0, monday.business_time_until(tuesday)
     Time.zone = nil
   end
-x
+
   it "properly calculate business time with respect to work_hours some 00:24 days" do
     friday = Time.parse("December 24, 2010 15:00")
     monday = Time.parse("December 27, 2010 11:00")
