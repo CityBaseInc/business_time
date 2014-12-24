@@ -3,7 +3,7 @@ require File.expand_path('../helper', __FILE__)
 describe "#region" do
   it "sets region in block" do
     BusinessTime.region :ca do
-      assert_equal :ca, BusinessTime::Config.region
+      assert_equal "ca", BusinessTime::Config.region
     end
   end
 

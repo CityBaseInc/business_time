@@ -21,9 +21,9 @@ describe "config" do
   end
 
   it "keep track of current region" do
-    assert_equal BusinessTime::Config.region, :any
-    BusinessTime::Config.region = :ca
-    assert_equal BusinessTime::Config.region, :ca
+    assert_equal BusinessTime::Config.region, "any"
+    BusinessTime::Config.region = "ca"
+    assert_equal BusinessTime::Config.region, "ca"
   end
 
   it "keep track of work week" do

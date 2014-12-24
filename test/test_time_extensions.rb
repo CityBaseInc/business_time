@@ -161,7 +161,7 @@ describe "time extensions" do
 
   # =================== working time ======================
 
-  it "provide different working time for different brands" do
+  it "ability to setup config for different companies" do
     yaml = <<-YAML
       business_time:
         my_company:
@@ -174,6 +174,36 @@ describe "time extensions" do
     BusinessTime.company :my_company do
       assert_equal "7:00 am", BusinessTime::Config.beginning_of_workday
       assert_equal "2:00 pm", BusinessTime::Config.end_of_workday
+    end
+  end
+
+  it "supports special dates" do
+    yaml = <<-YAML
+      business_time:
+        us:
+          beginning_of_workday: 7:00 am
+          end_of_workday: 2:00 pm
+          special_days:
+            "24 Dec 2014":
+              beginning_of_workday: 7:00 am
+              end_of_workday: 4:00 pm
+    YAML
+    config_file = StringIO.new(yaml.gsub!(/^    /, ''))
+    BusinessTime::Config.load_companies(config_file)
+
+    BusinessTime.company :us do
+      assert_equal "2:00 pm", BusinessTime::Config.end_of_workday
+      day = Date.parse("24 Dec 2014")
+      end_of_workday = Time.parse("2014-12-24 16:00:00 +0300")
+      assert_equal end_of_workday, Time.end_of_workday(day)
+
+      time = Time.parse("2014-12-24 14:50:00 +0300")
+      expected = Time.parse("2014-12-24 15:50:00 +0300")
+      assert_equal expected, 1.business_hour.after(time)
+
+      time = Time.parse("2014-12-23 14:50:00 +0300")
+      expected = Time.parse("2014-12-24 8:00:00 +0300")
+      assert_equal expected, 1.business_hours.after(time)
     end
   end
 end

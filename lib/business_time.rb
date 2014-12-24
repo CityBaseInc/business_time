@@ -19,14 +19,14 @@ require 'business_time/core_ext/active_support/time_with_zone'
 module BusinessTime
   class << self
 
-    def region(name, &block)
-      config = BusinessTime::Config.companies[name.to_s] || {}
-      config.merge!("region" => name)
+    def company(name, &block)
+      config = BusinessTime::Config.company_config(name)
+      config.merge!("company" => name)
       BusinessTime::Config.with(config) do
         yield
       end
     end
-    alias_method :company, :region
+    alias_method :region, :company
 
   end
 end

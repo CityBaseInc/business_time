@@ -17,17 +17,19 @@ describe "date extensions" do
   end
 
   it "know a holiday is not a workday" do
-    july_4 = Date.parse("July 5, 2010")
-    july_5 = Date.parse("July 6, 2010")
+    BusinessTime.region :us do
+      sun = Date.parse("July 11, 2010")
+      mon = Date.parse("July 12, 2010")
 
-    assert(!july_4.workday?)
-    assert(july_5.workday?)
+      assert(!sun.workday?)
+      assert(mon.workday?)
 
-    BusinessTime::Config.holidays << july_4
-    BusinessTime::Config.holidays << july_5
+      BusinessTime::Config.holidays << sun
+      BusinessTime::Config.holidays << mon
 
-    assert(!july_4.workday?)
-    assert(!july_5.workday?)
+      assert(!sun.workday?)
+      assert(!mon.workday?)
+    end
   end
 
   it "know a holiday is not a workday for region" do

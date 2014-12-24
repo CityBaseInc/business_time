@@ -13,8 +13,9 @@ module BusinessTime
       work_week:             %w(mon tue wed thu fri),
       work_hours:            {},
       work_hours_total:      {},
-      company:               :any,
+      company:               "any",
       companies:             {},
+      special_days:          {},
       _weekdays:             nil,
     }
 
@@ -78,6 +79,9 @@ module BusinessTime
     # Store settings for custom companies. See #load_companies for details
     threadsafe_cattr_accessor :companies
 
+    # Special days with difference config
+    threadsafe_cattr_accessor :special_days
+
     class << self
       alias_method :region, :company
       alias_method :region=, :company=
@@ -88,6 +92,9 @@ module BusinessTime
     class << self
       def end_of_workday(day=nil)
         if day
+          special_config = special_days[day.to_date]
+          return special_config['end_of_workday'] if special_config
+
           wday = work_hours[int_to_wday(day.wday)]
           wday ? (wday.last =~ /^0{1,2}\:0{1,2}$/ ? "23:59:59" : wday.last) : config[:end_of_workday]
         else
@@ -97,11 +104,18 @@ module BusinessTime
 
       def beginning_of_workday(day=nil)
         if day
+          special_config = special_days[day.to_date]
+          return special_config['beginning_of_workday'] if special_config
+
           wday = work_hours[int_to_wday(day.wday)]
           wday ? wday.first : config[:beginning_of_workday]
         else
           config[:beginning_of_workday]
         end
+      end
+
+      def company=(name)
+        config[:company] = name.to_s
       end
 
       def work_week=(days)
@@ -121,7 +135,7 @@ module BusinessTime
       # loads the config data from a yaml file written as:
       #
       #   business_time:
-      #     beginning_od_workday: 8:30 am
+      #     beginning_of_workday: 8:30 am
       #     end_of_workday: 5:30 pm
       #     holidays:
       #       - Jan 1st, 2010
@@ -147,7 +161,7 @@ module BusinessTime
       #
       #   business_time:
       #     my_company:
-      #       beginning_od_workday: 8:30 am
+      #       beginning_of_workday: 8:30 am
       #       end_of_workday: 5:30 pm
       #       holidays:
       #         - Jan 1st, 2010
@@ -163,11 +177,23 @@ module BusinessTime
           self.companies[company] = values.slice(*%w(beginning_of_workday end_of_workday work_week work_hours))
 
           # Parse holiday before load
-          self.companies[company]["holidays"] ||= []
+          self.companies[company]["holidays"] ||= [] if values["holidays"]
           (values["holidays"] || []).each do |holiday|
             self.companies[company]["holidays"] << Date.parse(holiday)
           end
+
+          # Set special days
+          self.companies[company]["special_days"] ||= {} if values["special_days"]
+          (values["special_days"] || []).each do |day_str, special_config|
+            day = Date.parse(day_str)
+            self.companies[company]["special_days"][day] = special_config
+          end
         end
+      end
+
+      # Return config for current company
+      def company_config(name)
+        companies[name.to_s] || {}
       end
 
       def with(config)
