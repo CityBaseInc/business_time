@@ -159,6 +159,22 @@ describe "time extensions" do
     assert_equal wednesday_morning, tuesday.previous_business_day
   end
 
+  it "returns first working day after holiday" do
+    BusinessTime.company :us do
+      sunday = Time.parse('Fri, 28 Dec 2014 04:00')
+      monday = Time.parse('Fri, 29 Dec 2014 09:00')
+      assert_equal monday, sunday.next_business_day
+    end
+  end
+
+  it "returns first working day before holiday" do
+    BusinessTime.company :us do
+      saturday = Time.parse('Fri, 13 Dec 2014 04:00')
+      friday = Time.parse('Fri, 12 Dec 2014 09:00')
+      assert_equal friday, saturday.previous_business_day
+    end
+  end
+
   # =================== working time ======================
 
   it "ability to setup config for different companies" do
