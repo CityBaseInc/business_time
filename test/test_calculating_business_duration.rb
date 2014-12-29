@@ -28,7 +28,7 @@ describe "calculating business duration" do
         :tue => ["9:00", "18:00"],
         :wed => ["9:00", "18:00"]
     }
-    assert_equal 32461.0, monday.business_time_until(tuesday)
+    assert_equal (9.hours + 1.minute + 1.second), monday.business_time_until(tuesday)
     Time.zone = nil
   end
 
