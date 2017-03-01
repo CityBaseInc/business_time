@@ -20,6 +20,12 @@ describe "config" do
     assert BusinessTime::Config.holidays.include?(daves_birthday)
   end
 
+  it "keep track of current region" do
+    assert_equal BusinessTime::Config.region, "any"
+    BusinessTime::Config.region = "ca"
+    assert_equal BusinessTime::Config.region, "ca"
+  end
+
   it "keep track of work week" do
     assert_equal %w[mon tue wed thu fri], BusinessTime::Config.work_week
     BusinessTime::Config.work_week = %w[sun mon tue wed thu]
@@ -151,6 +157,32 @@ describe "config" do
       end
       assert ran
       assert_equal "5:00 pm", BusinessTime::Config.end_of_workday
+    end
+  end
+
+  describe "#load_companies" do
+    it "load companies config" do
+      yaml = <<-YAML
+        business_time:
+          my_company:
+            beginning_of_workday: 8:30 am
+            end_of_workday: 5:30 pm
+            holidays:
+              - Jan 1st, 2010
+      YAML
+      config_file = StringIO.new(yaml.gsub!(/^    /, ''))
+      BusinessTime::Config.load_companies(config_file)
+
+      expected = {
+        "my_company" => {
+          "beginning_of_workday" => "8:30 am",
+          "end_of_workday" => "5:30 pm",
+          "holidays" => [
+            Date.parse("Jan 1st, 2010")
+          ]
+        }
+      }
+      assert_equal expected, BusinessTime::Config.companies
     end
   end
 end
