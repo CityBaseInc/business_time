@@ -210,7 +210,7 @@ describe "time extensions" do
     BusinessTime.company :us do
       assert_equal "2:00 pm", BusinessTime::Config.end_of_workday
       day = Date.parse("24 Dec 2014")
-      end_of_workday = Time.parse("2014-12-24 16:00:00 +0300")
+      end_of_workday = Time.parse("2014-12-24 16:00:00")
       assert_equal end_of_workday, Time.end_of_workday(day)
 
       time = Time.parse("2014-12-24 14:50:00 +0300")
