@@ -13,6 +13,12 @@ Gem::Specification.new do |s|
 
   s.files = `git ls-files -- {lib,rails_generators,LICENSE,README.rdoc}`.split("\n")
 
+  s.files             = Dir.glob("{lib,rails_generators,test}/**/*") +
+                        %w(Rakefile README.rdoc)
+  s.has_rdoc          = true
+  s.bindir            = ""
+  s.require_path      = ["lib"]
+
   s.add_dependency('activesupport','>= 3.1.0')
   s.add_dependency("tzinfo")
   s.add_dependency("holidays", "~>5.3")
