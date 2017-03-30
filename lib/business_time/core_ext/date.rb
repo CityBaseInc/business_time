@@ -5,7 +5,7 @@ class Date
   def workday?
     weekday? &&
       !BusinessTime::Config.holidays.include?(self) &&
-      !holiday?(BusinessTime::Config.region, :observed)
+      !Holidays.on(self, BusinessTime::Config.region, :observed).any?
   end
 
   def weekday?

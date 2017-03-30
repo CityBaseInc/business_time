@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency('activesupport','>= 3.1.0')
   s.add_dependency("tzinfo")
-  s.add_dependency("holidays")
+  s.add_dependency("holidays", "~>5.3")
 
   s.add_development_dependency "rake"
   s.add_development_dependency "rdoc"

@@ -1,22 +1,22 @@
 PATH
   remote: .
   specs:
-    business_time (0.7.3)
+    business_time (0.7.3.1)
       activesupport (>= 3.1.0)
-      holidays
+      holidays (~> 5.3)
       tzinfo
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.1.7)
-      i18n (~> 0.6, >= 0.6.9)
-      json (~> 1.7, >= 1.7.7)
+    activesupport (5.0.2)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (~> 0.7)
       minitest (~> 5.1)
-      thread_safe (~> 0.1)
       tzinfo (~> 1.1)
-    holidays (1.0.8)
-    i18n (0.6.11)
+    concurrent-ruby (1.0.5)
+    holidays (5.4.0)
+    i18n (0.8.1)
     json (1.8.1)
     minitest (5.2.2)
     minitest-rg (5.0.0)
@@ -24,7 +24,7 @@ GEM
     rake (10.1.1)
     rdoc (4.1.1)
       json (~> 1.4)
-    thread_safe (0.3.4)
+    thread_safe (0.3.6)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
 
@@ -37,3 +37,6 @@ DEPENDENCIES
   minitest-rg
   rake
   rdoc
+
+BUNDLED WITH
+   1.13.2
