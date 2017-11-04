@@ -15,11 +15,11 @@ as well as helpers to do that from any provided date or time.
 I needed this, but taking into account business hours/days and holidays.
 
 == Usage
-* install the gem
+=== install the gem
 
     gem install business_time
 
-* open up your console
+=== open up your console
 
     # if in irb, add these lines:
 
@@ -43,7 +43,11 @@ I needed this, but taking into account business hours/days and holidays.
     4.business_days.ago
     8.business_days.ago
 
-    # and we can do it from any Date or Time object.
+    Date.today.workday?
+    Date.parse("2015-12-09").workday?
+    Date.parse("2015-12-12").workday?
+
+And we can do it from any Date or Time object.
     my_birthday = Date.parse("August 4th, 1969")
     8.business_days.after(my_birthday)
     8.business_days.before(my_birthday)
@@ -53,24 +57,24 @@ I needed this, but taking into account business hours/days and holidays.
     8.business_days.before(my_birthday)
 
 
-    # We can adjust the start and end time of our business hours
+We can adjust the start and end time of our business hours
     BusinessTime::Config.beginning_of_workday = "8:30 am"
     BusinessTime::Config.end_of_workday = "5:30 pm"
 
-    # and we can add holidays that don't count as business days
-    # July 5 in 2010 is a monday that the U.S. takes off because our independence day falls on that Sunday.
+and we can add holidays that don't count as business days
+July 5 in 2010 is a monday that the U.S. takes off because our independence day falls on that Sunday.
     three_day_weekend = Date.parse("July 5th, 2010")
     BusinessTime::Config.holidays << three_day_weekend
     friday_afternoon = Time.parse("July 2nd, 2010, 4:50 pm")
     tuesday_morning = 1.business_hour.after(friday_afternoon)
 
-    # plus, we can change the work week:
+plus, we can change the work week:
     # July 9th in 2010 is a Friday.
     BusinessTime::Config.work_week = [:sun, :mon, :tue, :wed, :thu]
     thursday_afternoon = Time.parse("July 8th, 2010, 4:50 pm")
     sunday_morning = 1.business_hour.after(thursday_afternoon)
 
-    # as alternative we also can change the business hours for each work day:
+As alternative we also can change the business hours for each work day:
     BusinessTime::Config.work_hours = {
       :mon=>["9:00","17:00"],
       :fri=>["9:00","17:00"],
@@ -80,33 +84,46 @@ I needed this, but taking into account business hours/days and holidays.
     monday = Time.parse("December 27, 2010 11:00")
     working_hours = friday.business_time_until(monday) # 9.hours
 
-    # you can also calculate business duration between two dates
+You can also calculate business duration between two dates
     friday = Date.parse("December 24, 2010")
     monday = Date.parse("December 27, 2010")
     friday.business_days_until(monday) #=> 1
 
-    # or you can calculate business duration between two Time objects
+Or you can calculate business duration between two Time objects
     ticket_reported = Time.parse("February 3, 2012, 10:40 am")
     ticket_resolved = Time.parse("February 4, 2012, 10:50 am")
     ticket_reported.business_time_until(ticket_resolved) #=> 8.hours + 10.minutes
-    
-    # you can also determine if a given time is within business hours
+
+You can also determine if a given time is within business hours
     Time.parse("February 3, 2012, 10:00 am").during_business_hours?
 
-    # note that counterintuitively, durations might not be quite what you expect when involving weekends.
-    # Consider the following example:
+Note that counterintuitively, durations might not be quite what you expect when involving weekends.
+Consider the following example:
     ticket_reported = Time.parse("February 3, 2012, 10:40 am")
     ticket_resolved = Time.parse("February 4, 2012, 10:40 am")
     ticket_reported.business_time_until(ticket_resolved) # will equal 6 hours and 20 minutes!
 
-    # why does this happen?  Feb 4 2012 is a Saturday.  That time will roll over to
-    # Monday, Feb 6th 2012, 9:00am.  The business time between 10:40am friday and 9am monday is
-    # 6 hours and 20 minutes. From a quick inspection of the code, it looks like it should be 8 hours.
+Why does this happen?  Feb 4 2012 is a Saturday.  That time will roll over to
+Monday, Feb 6th 2012, 9:00am.  The business time between 10:40am friday and 9am monday is
+6 hours and 20 minutes. From a quick inspection of the code, it looks like it should be 8 hours.
 
-    # or you can calculate business dates between two dates
+Or you can calculate business dates between two dates
     monday = Date.parse("December 20, 2010")
     wednesday = Date.parse("December 22, 2010")
     monday.business_dates_until(wednesday) #=> [Mon, 20 Dec 2010, Tue, 21 Dec 2010]
+
+You can get the first workday after a time or return itself if it is a workday
+    saturday = Time.parse("Sat Aug 9, 18:00:00, 2014")
+    monday = Time.parse("Mon Aug 11, 18:00:00, 2014")
+    Time.first_business_day(saturday) #=> "Mon Aug 11, 18:00:00, 2014"
+    Time.first_business_day(monday) #=> "Mon Aug 11, 18:00:00, 2014"
+
+    # similar to Time#first_business_day Time#previous_business_day only cares about
+    # workdays:
+    saturday = Time.parse("Sat Aug 9, 18:00:00, 2014")
+    monday = Time.parse("Mon Aug 11, 18:00:00, 2014")
+    Time.previous_business_day(saturday) #=> "Fri Aug 8, 18:00:00, 2014"
+    Time.previous_business_day(monday) #=> "Mon Aug 11, 18:00:00, 2014"
 == Rails generator
 
     rails generate business_time:config
@@ -130,12 +147,11 @@ and some complexities (bugs?) in the timeWithZone class, this was harder than ex
   preserved and the beginning and end of times for the business day are
   referenced in that time zone.
 
-This can lead to some wierd looking effects if, say, you are in the Eastern time zone but doing everything in UTC times...
+This can lead to some weird looking effects if, say, you are in the Eastern time zone but doing everything in UTC times...
 Your business day will appear to start and end at 9:00 and 5:00 UTC.
 If this seems perplexing to you, I can almost guarantee you are in over your head with timezones in other ways too,
 this is just the first place you encountered it.
 Timezone relative date handling gets more and more complicated every time you look at it and takes a long time before it starts to seem simple again.
-I'm hoping Arild and I write some good blog entries on the subject at http://blog.codesherpas.com.
 
 == Integration with the Holidays gem
 
@@ -148,16 +164,6 @@ I'm hoping Arild and I write some good blog entries on the subject at http://blo
     # BusinessTime::Config.holidays << holiday[:date].next_week if !holiday[:date].weekday?
   end
 
-== Releases
-
-0.7.1 - fixing a multithreaded issue, upgrading some dependencies, loosening the dependency on TZInfo
-
-0.7.0 - major maintenance upgrade on the process of constructing the gem, testing the gem, and updating dependencies.
-        the api has not changed.
-
-
-0.6.2 - rchady pointed out that issue #14 didn't appear to be released.  This fixes that, as well as confirms that all tests run as expected on Ruby 2.0.0p195
-
 == Contributors
  * David Bock  http://github.com/bokmann
  * Enrico Bianco  http://github.com/enricob
@@ -166,6 +172,7 @@ I'm hoping Arild and I write some good blog entries on the subject at http://blo
  * Glenn Vanderburg http://github.com/glv
  * Michael Grosser http://github.com/grosser
  * Michael Curtis http://github.com/mcurtis
+ * Brian Ewins http://github.com/bazzargh
 
  (Special thanks for Arild on the complexities of dealing with TimeWithZone)
 
@@ -197,6 +204,20 @@ I'm hoping Arild and I write some good blog entries on the subject at http://blo
   need the baggage.
 
 
+== A note on stability and change
+
+Sometimes people ask me why this gem doesn't release more often.  My opinions on that are best discussed in person in a friendly discussion, but I'll attempt some of that here.
+
+First, a big part of the reason is that the projects I do use this gem on are happy with it's current functionality.  It is 'suitable for the purpose' for which I released it, and as such, maintenance I do on this gem is a gift to the community.
+
+Second, out of the ~1.3 million downloads (according to rubygems.org), the number of real 'issues' with this gem have been minimal.  Most of the issues that are opened are really people with slightly different requirements than I have regarding whether 'off hours' work counts as the previous or the next business day, a disagreement on the semantics of days vs. hours, etc.  I take care to try to explain these choices in the open issues, but to my mind, they aren't true issues if it's just a difference of opinion.  Even so, I'll gladly accept pull requests that resolve this difference of opinion as a configuration option... just don't expect me to do your job for you.  I've already given you 90% of what you need.
+
+Third, a business time gem is, well, relevant to businesses.  Many businesses don't move quickly.  My government clients move even more slowly.  Stability is favored in these environments.
+
+Fourth, new features can wait.  To the person that adds them they can be mission critical, but with modern packaging processes, they can use their version without waiting for their changes to be included in the upstream version.  Their changes don't break your code.
+
+I'm proud of the work in this gem; the stability is a big part of that.  This gem has lived longer than many others that have attempted to do the same thing.  I expect it to be here chugging away when Ruby has become the next COBOL.
+
 == Copyright
 
-Copyright (c) 2010,2011,2012,2013 bokmann. See LICENSE for details.
+Copyright (c) 2010-2017 bokmann. See LICENSE for details.

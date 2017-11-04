@@ -2,26 +2,26 @@ require File.expand_path('../helper', __FILE__)
 
 describe "time extensions" do
   it "know a weekend day is not a workday" do
-    assert( Time.workday?(Time.parse("April 9, 2010 10:45 am")))
-    assert(!Time.workday?(Time.parse("April 10, 2010 10:45 am")))
-    assert(!Time.workday?(Time.parse("April 11, 2010 10:45 am")))
-    assert( Time.workday?(Time.parse("April 12, 2010 10:45 am")))
+    assert( Time.parse("April 9, 2010 10:45 am").workday?)
+    assert(!Time.parse("April 10, 2010 10:45 am").workday?)
+    assert(!Time.parse("April 11, 2010 10:45 am").workday?)
+    assert( Time.parse("April 12, 2010 10:45 am").workday?)
   end
 
   it "know a weekend day is not a workday (with a configured work week)" do
     BusinessTime::Config.work_week = %w[sun mon tue wed thu]
-    assert( Time.weekday?(Time.parse("April 8, 2010 10:30am")))
-    assert(!Time.weekday?(Time.parse("April 9, 2010 10:30am")))
-    assert(!Time.weekday?(Time.parse("April 10, 2010 10:30am")))
-    assert( Time.weekday?(Time.parse("April 11, 2010 10:30am")))
+    assert( Time.parse("April 8, 2010 10:30am").weekday?)
+    assert(!Time.parse("April 9, 2010 10:30am").weekday?)
+    assert(!Time.parse("April 10, 2010 10:30am").weekday?)
+    assert( Time.parse("April 11, 2010 10:30am").weekday?)
   end
 
   it "know a holiday is not a workday" do
     BusinessTime::Config.holidays << Date.parse("July 4, 2010")
     BusinessTime::Config.holidays << Date.parse("July 5, 2010")
 
-    assert(!Time.workday?(Time.parse("July 4th, 2010 1:15 pm")))
-    assert(!Time.workday?(Time.parse("July 5th, 2010 2:37 pm")))
+    assert(!Time.parse("July 4th, 2010 1:15 pm").workday?)
+    assert(!Time.parse("July 5th, 2010 2:37 pm").workday?)
   end
 
 
@@ -53,12 +53,12 @@ describe "time extensions" do
 
   it "calculate business time only within business hours even if second endpoint is out of business time" do
     time_a = Time.parse('2012-02-01 10:00')
-    time_b = Time.parse("2012-02-01 " + BusinessTime::Config.end_of_workday) + 24.minutes
+    time_b = Time.parse("2012-02-01 " + BusinessTime::Config.end_of_workday.to_s) + 24.minutes
     first_result = time_a.business_time_until(time_b)
-    time_b = Time.parse('2012-02-01 '+ BusinessTime::Config.end_of_workday)
+    time_b = Time.parse('2012-02-01 '+ BusinessTime::Config.end_of_workday.to_s)
     second_result = time_a.business_time_until(time_b)
-    assert_equal first_result, second_result
     assert_equal first_result, 7.hours
+    assert_equal second_result, 7.hours
   end
 
   it "calculate business time only within business hours even if the first endpoint is out of business time" do
@@ -71,14 +71,14 @@ describe "time extensions" do
   it "return correct time between two consecutive days" do
     time_a = Time.parse('2012-02-01 10:00')
     time_b = Time.parse('2012-02-02 10:00')
-    working_hours = Time.parse(BusinessTime::Config.end_of_workday) - Time.parse(BusinessTime::Config.beginning_of_workday)
+    working_hours = BusinessTime::Config.end_of_workday - BusinessTime::Config.beginning_of_workday
     assert_equal time_a.business_time_until(time_b), working_hours
   end
 
   it "calculate proper timing if there are several days between" do
     time_a = Time.parse('2012-02-01 10:00')
     time_b = Time.parse('2012-02-09 11:00')
-    duration_of_working_day = Time.parse(BusinessTime::Config.end_of_workday) - Time.parse(BusinessTime::Config.beginning_of_workday)
+    duration_of_working_day = BusinessTime::Config.end_of_workday - BusinessTime::Config.beginning_of_workday
     assert_equal time_a.business_time_until(time_b), 6 * duration_of_working_day + 1.hour
     assert_equal time_b.business_time_until(time_a), -(6 * duration_of_working_day + 1.hour)
   end
@@ -88,7 +88,7 @@ describe "time extensions" do
     ticket_resolved = Time.parse("February 4, 2012, 10:40 am") #will roll over to Monday morning, 9:00am
     assert_equal ticket_reported.business_time_until(ticket_resolved), 6.hours + 20.minutes
   end
-  
+
   it "knows if within business hours" do
     assert(Time.parse("2013-02-01 10:00").during_business_hours?)
     assert(!Time.parse("2013-02-01 5:00").during_business_hours?)

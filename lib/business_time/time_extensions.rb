@@ -1,7 +1,14 @@
 module BusinessTime
   module TimeExtensions
-    def self.included(base)
-      base.extend(ClassMethods)
+    # True if this time is on a workday (between 00:00:00 and 23:59:59), even if
+    # this time falls outside of normal business hours.
+    def workday?
+      weekday? && !BusinessTime::Config.holidays.include?(to_date)
+    end
+
+    # True if this time falls on a weekday.
+    def weekday?
+      BusinessTime::Config.weekdays.include?(wday)
     end
 
     module ClassMethods
@@ -10,7 +17,7 @@ module BusinessTime
       # Note: It pretends that this day is a workday whether or not it really is a
       # workday.
       def end_of_workday(day)
-        end_of_workday = Time.parse(BusinessTime::Config.end_of_workday(day))
+        end_of_workday = BusinessTime::Config.end_of_workday(day)
         change_business_time(day,end_of_workday.hour,end_of_workday.min,end_of_workday.sec)
       end
 
@@ -19,20 +26,21 @@ module BusinessTime
       # Note: It pretends that this day is a workday whether or not it really is a
       # workday.
       def beginning_of_workday(day)
-        beginning_of_workday = Time.parse(BusinessTime::Config.beginning_of_workday(day))
+        beginning_of_workday = BusinessTime::Config.beginning_of_workday(day)
         change_business_time(day,beginning_of_workday.hour,beginning_of_workday.min,beginning_of_workday.sec)
       end
 
       # True if this time is on a workday (between 00:00:00 and 23:59:59), even if
       # this time falls outside of normal business hours.
       def workday?(day)
-        Time.weekday?(day) &&
-          !BusinessTime::Config.holidays.include?(day.to_date)
+        ActiveSupport::Deprecation.warn("`Time.workday?(time)` is deprecated. Please use `time.workday?`")
+        day.workday?
       end
 
       # True if this time falls on a weekday.
       def weekday?(day)
-        BusinessTime::Config.weekdays.include? day.wday
+        ActiveSupport::Deprecation.warn("`Time.weekday?(time)` is deprecated. Please use `time.weekday?`")
+        day.weekday?
       end
 
       def before_business_hours?(time)
@@ -47,7 +55,7 @@ module BusinessTime
       # when the time is outside of business hours
       def roll_forward(time)
 
-        if Time.before_business_hours?(time) || !Time.workday?(time)
+        if Time.before_business_hours?(time) || !time.workday?
           next_business_time = Time.beginning_of_workday(time)
         elsif Time.after_business_hours?(time) || Time.end_of_workday(time) == time
           next_business_time = Time.beginning_of_workday(time + 1.day)
@@ -55,17 +63,27 @@ module BusinessTime
           next_business_time = time.clone
         end
 
-        while !Time.workday?(next_business_time)
+        while !next_business_time.workday?
           next_business_time = Time.beginning_of_workday(next_business_time + 1.day)
         end
 
         next_business_time
       end
 
+      # Returns the time parameter itself if it is a business day
+      # or else returns the next business day
+      def first_business_day(time)
+        while !time.workday?
+          time = time + 1.day
+        end
+
+        time
+      end
+
       # Rolls backwards to the previous end_of_workday when the time is outside
       # of business hours
       def roll_backward(time)
-        prev_business_time = if (Time.before_business_hours?(time) || !Time.workday?(time))
+        prev_business_time = if (Time.before_business_hours?(time) || !time.workday?)
                                Time.end_of_workday(time - 1.day)
                              elsif Time.after_business_hours?(time)
                                Time.end_of_workday(time)
@@ -73,30 +91,40 @@ module BusinessTime
                                time.clone
                              end
 
-        while !Time.workday?(prev_business_time)
+        while !prev_business_time.workday?
           prev_business_time = Time.end_of_workday(prev_business_time - 1.day)
         end
 
         prev_business_time
       end
 
+      # Returns the time parameter itself if it is a business day
+      # or else returns the previous business day
+      def previous_business_day(time)
+        while !time.workday?
+          time = time - 1.day
+        end
+
+        time
+      end
+
       def work_hours_total(day)
-        return 0 unless Time.workday?(day)
+        return 0 unless day.workday?
 
         day = day.strftime('%a').downcase.to_sym
 
         if hours = BusinessTime::Config.work_hours[day]
           BusinessTime::Config.work_hours_total[day] ||= begin
             hours_last = hours.last
-            if hours_last == '00:00'
-              (Time.parse('23:59') - Time.parse(hours.first)) + 1.minute
+            if hours_last == ParsedTime.new(0, 0)
+              (ParsedTime.new(23, 59) - hours.first) + 1.minute
             else
-              Time.parse(hours_last) - Time.parse(hours.first)
+              hours_last - hours.first
             end
           end
         else
           BusinessTime::Config.work_hours_total[:default] ||= begin
-            Time.parse(BusinessTime::Config.end_of_workday) - Time.parse(BusinessTime::Config.beginning_of_workday)
+            BusinessTime::Config.end_of_workday - BusinessTime::Config.beginning_of_workday
           end
         end
       end
@@ -104,11 +132,7 @@ module BusinessTime
       private
 
       def change_business_time time, hour, min=0, sec=0
-        if Time.zone
-          time.in_time_zone(Time.zone).change(:hour => hour, :min => min, :sec => sec)
-        else
-          time.change(:hour => hour, :min => min, :sec => sec)
-        end
+        time.change(:hour => hour, :min => min, :sec => sec)
       end
     end
 
@@ -141,9 +165,34 @@ module BusinessTime
         first_day + days_in_between + last_day
       end * direction
     end
-    
+
     def during_business_hours?
-      Time.workday?(self) && self.to_i.between?(Time.beginning_of_workday(self).to_i, Time.end_of_workday(self).to_i)
+      self.workday? && self.to_i.between?(Time.beginning_of_workday(self).to_i, Time.end_of_workday(self).to_i)
+    end
+
+    def consecutive_workdays
+      workday? ? consecutive_days { |date| date.workday? } : []
+    end
+
+    def consecutive_non_working_days
+      !workday? ? consecutive_days { |date| !date.workday? } : []
+    end
+
+    private
+
+    def consecutive_days
+      days = []
+      date = self + 1.day
+      while yield(date)
+        days << date
+        date += 1.day
+      end
+      date = self - 1.day
+      while yield(date)
+        days << date
+        date -= 1.day
+      end
+      (days << self).sort
     end
   end
 end

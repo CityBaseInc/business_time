@@ -1,10 +1,20 @@
 module BusinessTime
 
   class BusinessHours
+    include Comparable
+    attr_reader :hours
+    
     def initialize(hours)
       @hours = hours
     end
 
+    def <=>(other)
+      if other.class != self.class
+        raise ArgumentError.new("#{self.class.to_s} can't be compared with #{other.class.to_s}")
+      end
+      self.hours <=> other.hours
+    end
+    
     def ago
       Time.zone ? before(Time.zone.now) : before(Time.now)
     end
@@ -14,9 +24,24 @@ module BusinessTime
     end
 
     def after(time)
+      non_negative_hours? ? calculate_after(time, @hours) : calculate_before(time, -@hours)
+    end
+    alias_method :since, :after
+
+    def before(time)
+      non_negative_hours? ? calculate_before(time, @hours) : calculate_after(time, -@hours)
+    end
+
+    private
+
+    def non_negative_hours?
+      @hours >= 0
+    end
+
+    def calculate_after(time, hours)
       after_time = Time.roll_forward(time)
       # Step through the hours, skipping over non-business hours
-      @hours.times do
+      hours.times do
         after_time = after_time + 1.hour
 
         if after_time.hour == 0 && after_time.min == 0 && after_time.sec == 0
@@ -28,18 +53,17 @@ module BusinessTime
         end
 
         # Ignore weekends and holidays
-        while !Time.workday?(after_time)
+        while !after_time.workday?
           after_time = after_time + 1.day
         end
       end
       after_time
     end
-    alias_method :since, :after
 
-    def before(time)
+    def calculate_before(time, hours)
       before_time = Time.roll_backward(time)
       # Step through the hours, skipping over non-business hours
-      @hours.times do
+      hours.times do
         before_time = before_time - 1.hour
 
         if before_time.hour == 0 && before_time.min == 0 && before_time.sec == 0
@@ -50,13 +74,13 @@ module BusinessTime
 
           # Due to the 23:59:59 end-of-workday exception
           time_roll_backward = Time.roll_backward(before_time)
-          time_roll_backward += 1.second if time_roll_backward.to_s =~ /23:59:59/
+          time_roll_backward += 1.second if time_roll_backward.iso8601 =~ /23:59:59/
 
           before_time = time_roll_backward - delta
         end
 
         # Ignore weekends and holidays
-        while !Time.workday?(before_time)
+        while !before_time.workday?
           before_time = before_time - 1.day
         end
       end
